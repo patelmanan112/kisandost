@@ -8,7 +8,10 @@
  */
 
 const AGRIVISION_BASE_URL =
-  process.env.AGRIVISION_API_URL || "http://127.0.0.1:8000";
+  process.env.AGRIVISION_API_URL ||
+  "https://parmarprashant--agrivision-diagnostic-engine-fastapi-app.modal.run";
+const AGRIVISION_LOCAL_URL =
+  process.env.AGRIVISION_LOCAL_API_URL || "http://127.0.0.1:8000";
 
 /** Shape of the API response */
 export interface AgriVisionRawResponse {
@@ -191,25 +194,47 @@ export async function analyzeWithAgriVision(file: Blob): Promise<AgriVisionDisea
   const formData = new FormData();
   formData.append("file", file);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
+  // Determine endpoints to try (Primary Cloud URL first, then Localhost fallback)
+  const candidateUrls: string[] = [];
+  if (AGRIVISION_BASE_URL) candidateUrls.push(AGRIVISION_BASE_URL.replace(/\/+$/, ""));
+  if (AGRIVISION_LOCAL_URL && !candidateUrls.includes(AGRIVISION_LOCAL_URL.replace(/\/+$/, ""))) {
+    candidateUrls.push(AGRIVISION_LOCAL_URL.replace(/\/+$/, ""));
+  }
 
-  console.log(`[AgriVisionService] Sending image to ${AGRIVISION_BASE_URL}/api/v1/diagnose ...`);
+  let raw: AgriVisionRawResponse | null = null;
+  let lastError: Error | null = null;
 
-  try {
-    const response = await fetch(`${AGRIVISION_BASE_URL}/api/v1/diagnose`, {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    });
+  for (const baseUrl of candidateUrls) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => response.statusText);
-      throw new Error(`AgriVision API error ${response.status}: ${errorText}`);
+    try {
+      console.log(`[AgriVisionService] Trying endpoint ${baseUrl}/api/v1/diagnose ...`);
+      const response = await fetch(`${baseUrl}/api/v1/diagnose`, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        throw new Error(`AgriVision API error ${response.status}: ${errorText}`);
+      }
+
+      raw = await response.json();
+      console.log(`[AgriVisionService] Diagnosis successfully received from ${baseUrl}: ${raw?.diagnosis?.name}`);
+      break;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.warn(`[AgriVisionService] Connection to ${baseUrl} failed:`, err.message);
+      lastError = err;
     }
+  }
 
-    const raw: AgriVisionRawResponse = await response.json();
-    console.log(`[AgriVisionService] Diagnosis received: ${raw.diagnosis?.name}`);
+  if (!raw) {
+    throw lastError || new Error("Failed to connect to AgriVision AI service (both Cloud and Localhost failed).");
+  }
 
     const isHealthy =
       raw.diagnosis.type === "healthy" ||
@@ -350,8 +375,5 @@ export async function analyzeWithAgriVision(file: Blob): Promise<AgriVisionDisea
       requiresExpertVerification: raw.requires_expert_verification ?? false,
       focusRegion,
     };
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
