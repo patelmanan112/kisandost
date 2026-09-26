@@ -56,6 +56,7 @@ class _CaptureView extends ConsumerWidget {
       color: const Color(0xFF14140F),
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Top Header: back button + title + subtitle
             Padding(
@@ -118,19 +119,24 @@ class _CaptureView extends ConsumerWidget {
             // Viewfinder Camera Frame
             Expanded(
               child: Container(
+                width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 18),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
                   color: const Color(0xFF23231C),
                 ),
+                clipBehavior: Clip.antiAlias,
                 child: Stack(
+                  fit: StackFit.expand,
                   alignment: Alignment.center,
                   children: [
                     // Watermark illustration
-                    const Icon(
-                      Icons.eco_outlined,
-                      size: 140,
-                      color: Color(0xFF4A4A3E),
+                    const Center(
+                      child: Icon(
+                        Icons.eco_outlined,
+                        size: 140,
+                        color: Color(0xFF4A4A3E),
+                      ),
                     ),
 
                     // Viewfinder 4 Corner Brackets
@@ -142,21 +148,26 @@ class _CaptureView extends ConsumerWidget {
                     // Top floating pill: "Fill the frame with one affected leaf"
                     Positioned(
                       top: 18,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFBBF24),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          l10n.diagnoseGuide,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF14140F),
+                      left: 16,
+                      right: 16,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFBBF24),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            l10n.diagnoseGuide,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF14140F),
+                            ),
                           ),
                         ),
                       ),
@@ -201,8 +212,9 @@ class _CaptureView extends ConsumerWidget {
                         controller.pickAndDiagnose(ImageSource.gallery),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      width: 60,
+                      width: 72,
                       height: 60,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF3B3A32)),
@@ -219,10 +231,12 @@ class _CaptureView extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             l10n.diagnoseGallery,
-                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 9,
+                              height: 1.1,
                               color: Colors.white,
                             ),
                           ),
@@ -263,8 +277,9 @@ class _CaptureView extends ConsumerWidget {
                     onTap: () => controller.pickAndDiagnose(ImageSource.camera),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      width: 60,
+                      width: 72,
                       height: 60,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF3B3A32)),
@@ -281,10 +296,12 @@ class _CaptureView extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             l10n.diagnoseTakePhoto,
-                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 9,
+                              height: 1.1,
                               color: Colors.white,
                             ),
                           ),
@@ -331,10 +348,10 @@ class _CornerBracket extends StatelessWidget {
     final isLeft = alignment.x < 0;
 
     return Positioned(
-      top: isTop ? 80 : null,
-      bottom: isTop ? null : 80,
-      left: isLeft ? 40 : null,
-      right: isLeft ? null : 40,
+      top: isTop ? 72 : null,
+      bottom: isTop ? null : 124,
+      left: isLeft ? 36 : null,
+      right: isLeft ? null : 36,
       width: size,
       height: size,
       child: DecoratedBox(
